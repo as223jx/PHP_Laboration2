@@ -6,8 +6,8 @@ class LoginModel {
 		
 	}
 	
-	public function login(){
-		$ret = "";
-		return $ret;
+	public function loggedIn(){
+
+			return true;
 	}
 }

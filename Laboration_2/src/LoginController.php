@@ -13,10 +13,10 @@ class LoginController {
 	}
 	
 	public function doLogin() {
-		if($this->view->userPressedLogin()){
-			$this->model->login();
-		}
+		//if($this->view->userPressedLogin()){
+		//	$this->model->loggedIn();
+		//}
 		
-		return "<p>Logga in!</p>";
+		return $this->view->showLoginForm();
 	}
 }
