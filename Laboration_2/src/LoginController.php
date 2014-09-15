@@ -1,5 +1,9 @@
 <?php
 
+//Kontrollera hur interakionen mellan användaren och systemet fungerar
+//Flödet i hur programmet fungerar
+//Frågar modellen, berättar för vyn
+
 require_once("src/LoginModel.php");
 require_once("src/LoginView.php");
 
@@ -12,7 +16,7 @@ class LoginController {
 		$this->view = new LoginView($this->model);
 	}
 	
-	public function doLogin() {
+	public function doControll() {
 		//if($this->view->userPressedLogin()){
 		//	$this->model->loggedIn();
 		//}
