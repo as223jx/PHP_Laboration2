@@ -14,13 +14,18 @@ class LoginController {
 	public function __construct(){
 		$this->model = new LoginModel();
 		$this->view = new LoginView($this->model);
+		
+//		$this->doControll();
 	}
 	
 	public function doControll() {
-		//if($this->view->userPressedLogin()){
-		//	$this->model->loggedIn();
-		//}
 		
-		return $this->view->showLoginForm();
+		if($this->view->loggedInStatus()){
+			return $this->view->showLoggedIn();
+		}
+		else{
+			return $this->view->showLoginForm();
+		}
+
 	}
 }

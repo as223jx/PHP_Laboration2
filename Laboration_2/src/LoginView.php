@@ -5,51 +5,75 @@
 
 class LoginView {
 	private $model;
+	private $username;
+	private $password = "";
 	
 	public function __construct(LoginModel $model){
 		$this->model = $model;
 	}
 	
-	public function showLoginForm(){
-		$ret = "";
-		$username = "inget";
-		
-		if($this->userPressedLogin()){
-			$username = $_POST["username"];	
-			$password = $_POST["password"];
-			
-			if ($this->model->loggedIn($username, $password)){
-				$ret .= "<p>You are logged in. Welcome, $username ! Password: $password</p>";
-			}
-			else{
-				$ret .= "Please fill in both fields!";
-			}
+	//Returnerar true eller false beroende på om användaren redan är inloggad
+	public function loggedInStatus(){
+		if(isset($_SESSION["loggedIn"]) == false){
+			$_SESSION["loggedIn"] = 0;
 		}
 		
+		if($_SESSION["loggedIn"] == 0){
+			return false;
+		}
 		else{
-			$ret .= "
-			<form action='' method='post'>
-			Username: <input type='text' name='username' id='username'><br>
-			Password: <input type='password' name='password'><br>
-			<input type='checkbox' name='remember' value='Remember'>Remember me
-			<input type='submit' name='submit' value='submit'>
-			</form>";
-			//<a href='?login'>Logga in</a>
-			
+			return true;
 		}
-		
-		return $ret;
 	}
 	
+	//Visar login-formuläret om ej redan inloggad
+	public function showLoginForm(){
+		$ret = "";
+
+		if($_SESSION["loggedIn"] == 0){
+		
+			$ret = "
+			<h1>Laborationskod as223jx</h2>
+			<h2>Ej inloggad</h2>
+			<form action='' method='post'>
+			Användarnamn: <input type='text' name='username' id='username'>
+			Lösenord: <input type='password' name='password'>
+			<input type='checkbox' name='remember' value='Remember'>Håll mig inloggad: 
+			<input type='submit' name='submit' value='Logga in'>
+			</form>";
+
+			if($this->userPressedLogin()){
+				$_SESSION["username"] = $_POST["username"];	
+				$_SESSION["password"] = $_POST["password"];
+				
+				if ($this->model->login($_SESSION["username"], $_SESSION["password"])){
+					$_SESSION["loggedIn"] = 1;
+					
+					$ret .= "<p>You are logged in. Welcome, ". $_SESSION["username"]."!</p>";
+				}
+				//else{
+				//	$ret .= "Wrong username or password!";
+				//}
+			}
+		}
+
+		return $ret;
+	}	
+	
+	//Inloggad
+	public function showLoggedIn(){
+		$ret = "<p>You are logged in. Welcome, ". $_SESSION["username"]."</p>";
+		return $ret;
+	}
+
 	public function userPressedLogin(){
 		
 		if (isset($_POST["username"])){
-			echo "Ja";
 			return true;
 		}
 		
 		else{
-			echo "Nej";
+
 			return false;
 		}
 	}
