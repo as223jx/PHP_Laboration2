@@ -7,6 +7,7 @@
 require_once("src/users.txt");
 
 class LoginModel {
+	private $loggedIn = "loggedIn";
 	
 	public function __construct(){
 		
@@ -28,6 +29,25 @@ class LoginModel {
 		return false;
 	}
 	
+	//Kollar om användaren redan är inloggad eller ej
+	public function loggedInStatus(){
+		if(isset($_SESSION[$this->loggedIn]) == false){
+			$_SESSION[$this->loggedIn] = 0;
+		}
+		
+		if(isset($_GET["loggedOut"]) and $_SESSION[$this->loggedIn] == 1){
+			$_SESSION[$this->loggedIn] = 0;
+			echo "Du har nu loggat ut";
+		}
+		
+		if($_SESSION[$this->loggedIn] == 0){
+			return false;
+		}
+		else{
+			return true;
+		}
+	}
+	
 	public function login($username, $password){
 			
 			if($this->checkIfEmpty($username, $password) == false){
@@ -47,6 +67,7 @@ class LoginModel {
 	
 				for($i = 0; $i < count($linesArr); $i++){
 					if($username === $linesArr[$i] and $password === $linesArr[$i+1]){
+						$_SESSION[$this->loggedIn] = 1;
 						return true;
 					}
 					else{

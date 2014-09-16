@@ -20,7 +20,7 @@ class LoginController {
 	
 	public function doControll() {
 		
-		if($this->view->loggedInStatus()){
+		if($this->model->loggedInStatus()){
 			return $this->view->showLoggedIn();
 		}
 		else{
