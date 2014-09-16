@@ -10,22 +10,22 @@ require_once("src/LoginView.php");
 class LoginController {
 	private $view;
 	private $model;
+	private $username ="";
 	
 	public function __construct(){
 		$this->model = new LoginModel();
 		$this->view = new LoginView($this->model);
-		
-//		$this->doControll();
 	}
 	
 	public function doControll() {
+		$username = $this->model->getLoggedInUser();
 		
+		//Kollar om användaren är inloggad eller ej
 		if($this->model->loggedInStatus()){
-			return $this->view->showLoggedIn();
+			return $this->view->showLoggedIn($username);
 		}
 		else{
 			return $this->view->showLoginForm();
 		}
-
 	}
 }

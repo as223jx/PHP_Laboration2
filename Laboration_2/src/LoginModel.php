@@ -31,15 +31,17 @@ class LoginModel {
 	
 	//Kollar om användaren redan är inloggad eller ej
 	public function loggedInStatus(){
+			
 		if(isset($_SESSION[$this->loggedIn]) == false){
 			$_SESSION[$this->loggedIn] = 0;
 		}
 		
 		if(isset($_GET["loggedOut"]) and $_SESSION[$this->loggedIn] == 1){
 			$_SESSION[$this->loggedIn] = 0;
+			session_destroy();
 			echo "Du har nu loggat ut";
 		}
-		
+
 		if($_SESSION[$this->loggedIn] == 0){
 			return false;
 		}
@@ -48,35 +50,45 @@ class LoginModel {
 		}
 	}
 	
-	public function login($username, $password){
-			
-			if($this->checkIfEmpty($username, $password) == false){
-				
-				$linesArr = array();
-				$fh = fopen("src/users.txt", "r");
-				
-				while (!feof($fh)){
-					$line = fgets($fh);
-					$line = trim($line);
-					
-					$linesArr[] = $line;
-				}
-				
-				fclose($fh);
-				
+	public function getLoggedInUser(){
+		$username = "";
+		
+		if(isset($_SESSION["username"])){
+			$username = $_SESSION["username"];
+		}
+		
+		return $username;
+	}
 	
-				for($i = 0; $i < count($linesArr); $i++){
-					if($username === $linesArr[$i] and $password === $linesArr[$i+1]){
-						$_SESSION[$this->loggedIn] = 1;
-						return true;
-					}
-					else{
-						echo "Fel användarnamn eller lösenord";
-						return false;
-					}
-					$i++;
-				}
+	public function login($username, $password){
+		
+		if($this->checkIfEmpty($username, $password) == false){
+			$_SESSION["username"] = $username;
+			$_SESSION["password"] = $password;
+		
+			$linesArr = array();
+			$fh = fopen("src/users.txt", "r");
+			
+			while (!feof($fh)){
+				$line = fgets($fh);
+				$line = trim($line);
 				
+				$linesArr[] = $line;
 			}
+			fclose($fh);
+
+			for($i = 0; $i < count($linesArr); $i++){
+				if($username === $linesArr[$i] and $password === $linesArr[$i+1]){
+					$_SESSION[$this->loggedIn] = 1;
+					return true;
+				}
+				else{
+					echo "Fel användarnamn eller lösenord";
+					return false;
+				}
+				$i++;
+			}
+			
+		}
 	}
 }
