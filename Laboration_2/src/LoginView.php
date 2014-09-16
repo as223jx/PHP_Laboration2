@@ -12,7 +12,11 @@ class LoginView {
 		$this->model = $model;
 	}
 	
-	//Returnerar true eller false beroende på om användaren redan är inloggad
+	//
+	//
+	// Fixa! Endast modellen talar med sessionen
+	//
+	//
 	public function loggedInStatus(){
 		if(isset($_SESSION["loggedIn"]) == false){
 			$_SESSION["loggedIn"] = 0;
