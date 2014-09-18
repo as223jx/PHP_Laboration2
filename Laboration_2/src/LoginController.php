@@ -18,11 +18,11 @@ class LoginController {
 	}
 	
 	public function doControll() {
-
-
-		$username = $this->model->getLoggedInUser();
+		
+		$this->view->checkCookies();
 		//Kollar om användaren är inloggad eller ej i sessionen
 		if($this->model->loggedInStatus()){
+			$username = $this->model->getLoggedInUser();
 			return $this->view->showLoggedIn($username);
 		}
 		else{

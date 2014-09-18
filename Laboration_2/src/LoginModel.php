@@ -39,8 +39,8 @@ class LoginModel {
 		
 		if(isset($_POST["logOut"]) and $_SESSION[$this->loggedIn] == 1){
 			$_SESSION[$this->loggedIn] = 0;
-			//setcookie("username", "", time()-3600);
-			//setcookie("password", "", time()-3600);
+			setcookie('Username', null, false);
+            setcookie('Password', null, false);
 			session_destroy();
 			echo "Du har nu loggat ut";
 		}
