@@ -29,6 +29,7 @@ class LoginModel {
 		return false;
 	}
 	
+	
 	//Kollar om användaren redan är inloggad eller ej
 	public function loggedInStatus(){
 			
@@ -36,8 +37,10 @@ class LoginModel {
 			$_SESSION[$this->loggedIn] = 0;
 		}
 		
-		if(isset($_GET["loggedOut"]) and $_SESSION[$this->loggedIn] == 1){
+		if(isset($_POST["logOut"]) and $_SESSION[$this->loggedIn] == 1){
 			$_SESSION[$this->loggedIn] = 0;
+			//setcookie("username", "", time()-3600);
+			//setcookie("password", "", time()-3600);
 			session_destroy();
 			echo "Du har nu loggat ut";
 		}
@@ -50,6 +53,7 @@ class LoginModel {
 		}
 	}
 	
+	//Hämtar användarnamnet på personen inloggad i sessionen
 	public function getLoggedInUser(){
 		$username = "";
 		
@@ -60,7 +64,7 @@ class LoginModel {
 		return $username;
 	}
 	
-	public function login($username, $password){
+	public function login($username, $password, $value){
 		
 		if($this->checkIfEmpty($username, $password) == false){
 			$_SESSION["username"] = $username;
@@ -79,6 +83,16 @@ class LoginModel {
 
 			for($i = 0; $i < count($linesArr); $i++){
 				if($username === $linesArr[$i] and $password === $linesArr[$i+1]){
+					
+					if($value){
+						setcookie('Username', $_POST["username"], time()+60*60*24*365);
+            			setcookie('Password', crypt($_POST["password"]), time()+60*60*24*365);
+					}
+					//else{
+					//	setcookie('Username', $_POST["username"], false);
+            		//	setcookie('Password', crypt($_POST["password"]), false);
+					//}
+					
 					$_SESSION[$this->loggedIn] = 1;
 					return true;
 				}

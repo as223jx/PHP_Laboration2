@@ -18,14 +18,16 @@ class LoginController {
 	}
 	
 	public function doControll() {
+
+
 		$username = $this->model->getLoggedInUser();
-		
-		//Kollar om användaren är inloggad eller ej
+		//Kollar om användaren är inloggad eller ej i sessionen
 		if($this->model->loggedInStatus()){
 			return $this->view->showLoggedIn($username);
 		}
 		else{
 			return $this->view->showLoginForm();
 		}
+		
 	}
 }
