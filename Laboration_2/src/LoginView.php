@@ -7,6 +7,7 @@ class LoginView {
 	private $model;
 	private $username;
 	private $rememberValue;
+	private $saveUser;
 	
 	public function __construct(LoginModel $model){
 		$this->model = $model;
@@ -15,7 +16,12 @@ class LoginView {
 	
 	//Visar login-formuläret om ej redan inloggad
 	public function showLoginForm(){
-		$username = $this->model->getLoggedInUser();
+        if(isset($_POST["logOut"])){
+            echo "Du har loggat ut";
+        }
+        if (isset($_POST["username"])){
+            $username = $_POST["username"];
+        }
 		//echo $username;
 		$ret = "";
 		
@@ -30,50 +36,26 @@ class LoginView {
 		<form action='' method='post'>
 		<fieldset>
 		<legend>Login - Skriv in användarnamn och lösenord</legend>
-		Användarnamn: <input type='text' name='username' id='username'>
+		Användarnamn: <input type='text' name='username' id='username' value='$username'>
 		Lösenord: <input type='password' name='password'>
 		<input type='checkbox' name='remember' value='Remember'>Håll mig inloggad: 
 		<input type='submit' name='submit' value='Logga in'>
 		</fieldset>
 		</form>
 		<p>$dateTime</p>";
-
-		if($this->userPressedLogin()){
-			if (isset($_POST["remember"])){
-				$this->rememberValue = true;
-			}
-			else{
-				$this->rememberValue = false;
-			}
-			if ($this->model->login($_POST["username"], $_POST["password"], $this->rememberValue)){
-
-				if($this->rememberValue == true){
-						$this->setCookie();
-						echo "Kaka satt";
-						echo $_COOKIE["Username"];
-						echo $_COOKIE["Password"];
-						}
-						
-				// if(isset($_COOKIE["Username"]) && (isset($_COOKIE["Password"]))){
-					// echo "Här ska det skrivas";
-					// $storage = fopen("src/storage.txt", "w");
-					// $data = $_COOKIE["Username"] . "\n". $_COOKIE["Password"];
-					// fwrite($storage, $data);
-					// fclose($storage);
-
-				//}
-				$ret = $this->showLoggedIn($_POST["username"]);
-			}
-		}
 		
 		return $ret;
 	}	
 	
 	public function setCookie(){
-		echo "setCookie lalalalala";
 		setcookie('Username', $_POST["username"], time()+60*60*24*365, "/");
 		setcookie('Password', crypt($_POST["password"]), time()+60*60*24*365, "/");
-		return;
+		chmod("/src/storage.txt", 0777);
+			$storage = fopen("/src/cookieExpire.txt", "w");
+			$data = time()+60*60*24*365;
+			fwrite($storage, $data);
+			fclose($storage);
+	    return;
 	}
 	
 	public function getLoggedInUser(){
@@ -91,15 +73,14 @@ class LoginView {
 	
 	//Inloggad
 	public function showLoggedIn($username){
-		if(isset($_COOKIE["Username"])){
+	    if(isset($_COOKIE["Username"])){
 			$username = $_COOKIE["Username"];
-			echo "Username: " . $username;
 		}
 		
-		if(isset($_COOKIE["Password"])){
-			echo $_COOKIE["Password"];
+		if(isset($_COOKIE["Username"]) && isset($_COOKIE["Password"])){
+		    $this->storeCookies();
 		}
-		//<a href='?loggedOut'>Logga ut</a>
+		
 		$ret = "<h1>Laborationskod as223jx</h1><h2>".$username." är inloggad</h2><br>
 		<form action='' method='post'>
 		<input type='submit' value='Logga ut' name='logOut'/>
@@ -107,35 +88,54 @@ class LoginView {
 		return $ret;
 	}
 
+    public function loginSuccess(){
+        if($this->checkCookies()){
+            return "";
+        }
+        return "Inloggning lyckades";
+    }
+    
 	public function userPressedLogin(){
-		
-		if (isset($_POST["username"])){
-			//if(isset($_POST["remember"])){
-			//	echo "Håll mig inloggad";
-			//}
+        if(isset($_POST["username"])){
+    		if (isset($_POST["remember"])){
+    			$this->rememberValue = true;
+    		}
+    		else{
+    			$this->rememberValue = false;
+    		}
+    		if ($this->model->login($_POST["username"], $_POST["password"], $this->rememberValue)){
+    
+    			if($this->rememberValue == true){
+    			    $_POST["username"];
+    				$this->setCookie();
 
-
-			
-			return true;
-		}
-		
-		else{
-			return false;
-		}
+    				header('Location: ' . $_SERVER['PHP_SELF']);
+    			}
+    		    return true;
+    		}
+        }
+        else{
+            return false;
+        }
+	}
+	
+	public function rememberMe(){
+	    if (isset($_POST["remember"])){
+	        return true;
+	    }
+	    else{
+	        return false;
+	    }
 	}
 	
 	public function checkCookies(){
 		if(isset($_COOKIE["Username"]) && (isset($_COOKIE["Password"]))){
 			$password = "";
 			$username = "";
-			if ($_SESSION["loggedIn"] == 1){
-				echo "Store cookies";
-				$this->storeCookies();
-			}
-			echo "Sessionsvärde: " . $_SESSION["loggedIn"];
 			
 			$linesArr = array();
-			$fh = fopen("src/storage.txt", "r");
+			chmod("/src/storage.txt", 0777);
+			$fh = fopen("/src/storage.txt", "r");
 			
 			while (!feof($fh)){
 				$line = fgets($fh);
@@ -146,20 +146,28 @@ class LoginView {
 			fclose($fh);
 			
 			if(count($linesArr) == 2){
-			$username = $linesArr[0];
-			$password = $linesArr[1];
-			}
-			else{ echo "Finns inget stored!";
-				if(isset($_COOKIE["Password"])){
-					echo "Kaka password : " . $_COOKIE["Password"];
-				}
+    			$username = $linesArr[0];
+    			$password = $linesArr[1];
 			}
 			
-			if($_COOKIE["Username"] == $username && $_COOKIE["Password"] == $password){
+			$expire = fopen("/src/cookieExpire.txt", "r");
+			while (!feof($expire)){
+				$line = fgets($expire);
+				$line = trim($line);
+				
+				$expireArr[] = $line;
+			}
+			fclose($expire);
+			
+			if($_COOKIE["Username"] == $username && $_COOKIE["Password"] == $password && $this->model->loggedInStatus() == false && $expire > time()){
 				echo "Inloggning lyckades via cookies";
 				return true;
 			}
-			else {
+			else if($_COOKIE["Username"] == $username && $_COOKIE["Password"] == $password && $this->model->loggedInStatus() == true && $expire > time()){
+			    return true;
+			}
+			else{
+				$this->model->resetCookies();
 				echo "Felaktig information i cookie";
 				return false;
 			}
@@ -171,11 +179,24 @@ class LoginView {
 	}
 	
 	public function storeCookies(){
-			$storage = fopen("src/storage.txt", "w");
+        $linesArr = array();
+		chmod("/src/storage.txt", 0777);
+		$fh = fopen("/src/storage.txt", "r");
+		
+		while (!feof($fh)){
+			$line = fgets($fh);
+			$line = trim($line);
+			
+			$linesArr[] = $line;
+		}
+		fclose($fh);
+
+        if(count($linesArr) != 2){
+		    chmod("/src/storage.txt", 0777);
+			$storage = fopen("/src/storage.txt", "w");
 			$data = $_COOKIE["Username"] . "\n". $_COOKIE["Password"];
 			fwrite($storage, $data);
 			fclose($storage);
-			echo "Kakan skriven till fil";
-			return;
+        }
 	}
 }
