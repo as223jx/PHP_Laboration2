@@ -1,11 +1,7 @@
 <?php
 
-//Kontrollera hur interakionen mellan användaren och systemet fungerar
-//Flödet i hur programmet fungerar
-//Frågar modellen, berättar för vyn
-
-require_once("src/LoginModel.php");
-require_once("src/LoginView.php");
+require_once("/src/LoginModel.php");
+require_once("/src/LoginView.php");
 
 class LoginController {
 	private $view;
@@ -19,33 +15,50 @@ class LoginController {
 	
 	public function doControll() {
 		$username = $this->view->getLoggedInUser();
-		echo $username;
+
+        if($this->model->loggedInStatus()){
+        	return $this->view->showLoggedIn($username);
+        }
+        else{
+    		if($this->view->checkCookies()){
+    			$this->model->setLoggedInStatus();
+    			echo $this->view->loginSuccess();
+    			return $this->view->showLoggedIn($username);
+    		}
+    		else{
+    			if($this->view->userPressedLogin()){
+    			    $this->model->setLoggedInStatus();
+    			    $username = $this->view->getLoggedInUser();
+    			    echo $this->view->loginSuccess();
+    			 //$this->view->storeCookies();
+    				return $this->view->showLoggedIn($username);
+    			}
+    			else{
+    				return $this->view->showLoginForm();
+    			}
+    		}
+        }
 
 		//Om användaren redan är inloggad
-		//Session = 1
-		if($this->model->loggedInStatus()){			
+//		if($this->model->loggedInStatus()){			
 //                if($this->view->checkCookies()){
-				    return $this->view->showLoggedIn($username);
+//				    return $this->view->showLoggedIn($username);
 //                }
 //                else{
-//                    return $this->view->showLoginForm();
+//                    return $this->view->showLoggedIn($username);
 //                }
-
-		}
+//
+//		}
 		//Om användaren ej är inloggad
-		//Session = 0
-		else{
-			//Om cookies satta och cookiesen stämmer..
-			if($this->view->checkCookies()){
-				//Ger session = 1
-					$this->model->setLoggedInStatus();
-					//Visar inloggad
-					return $this->view->showLoggedIn($username);
-			}
-			else{
-				return $this->view->showLoginForm();
-			}
-		}
-	
+//		
+//		else{
+//			if($this->view->checkCookies()){
+//					$this->model->setLoggedInStatus();
+//					return $this->view->showLoggedIn($username);
+//			}
+//			else{
+//				return $this->view->showLoginForm();
+//			}
+//		}
 	}
 }
