@@ -18,16 +18,34 @@ class LoginController {
 	}
 	
 	public function doControll() {
-		
-		$this->view->checkCookies();
-		//Kollar om användaren är inloggad eller ej i sessionen
-		if($this->model->loggedInStatus()){
-			$username = $this->model->getLoggedInUser();
-			return $this->view->showLoggedIn($username);
+		$username = $this->view->getLoggedInUser();
+		echo $username;
+
+		//Om användaren redan är inloggad
+		//Session = 1
+		if($this->model->loggedInStatus()){			
+//                if($this->view->checkCookies()){
+				    return $this->view->showLoggedIn($username);
+//                }
+//                else{
+//                    return $this->view->showLoginForm();
+//                }
+
 		}
+		//Om användaren ej är inloggad
+		//Session = 0
 		else{
-			return $this->view->showLoginForm();
+			//Om cookies satta och cookiesen stämmer..
+			if($this->view->checkCookies()){
+				//Ger session = 1
+					$this->model->setLoggedInStatus();
+					//Visar inloggad
+					return $this->view->showLoggedIn($username);
+			}
+			else{
+				return $this->view->showLoginForm();
+			}
 		}
-		
+	
 	}
 }

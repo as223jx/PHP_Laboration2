@@ -4,7 +4,7 @@
 //Får användaren logga in?
 //Vem är inloggad?
 
-require_once("src/users.txt");
+//require_once("src/users.txt");
 
 class LoginModel {
 	private $loggedIn = "loggedIn";
@@ -41,6 +41,10 @@ class LoginModel {
 			$_SESSION[$this->loggedIn] = 0;
 			setcookie('Username', null, false);
             setcookie('Password', null, false);
+			
+			$storage = fopen("src/storage.txt", "w");
+			fclose($storage);
+			
 			session_destroy();
 			echo "Du har nu loggat ut";
 		}
@@ -64,6 +68,10 @@ class LoginModel {
 		return $username;
 	}
 	
+	public function setLoggedInStatus(){
+		$_SESSION[$this->loggedIn] = 1;
+	}
+	
 	public function login($username, $password, $value){
 		
 		if($this->checkIfEmpty($username, $password) == false){
@@ -83,17 +91,12 @@ class LoginModel {
 
 			for($i = 0; $i < count($linesArr); $i++){
 				if($username === $linesArr[$i] and $password === $linesArr[$i+1]){
-					
-					if($value){
-						setcookie('Username', $_POST["username"], time()+60*60*24*365);
-            			setcookie('Password', crypt($_POST["password"]), time()+60*60*24*365);
-					}
-					//else{
-					//	setcookie('Username', $_POST["username"], false);
-            		//	setcookie('Password', crypt($_POST["password"]), false);
-					//}
-					
+
 					$_SESSION[$this->loggedIn] = 1;
+					
+
+					header('Location: ' . $_SERVER['PHP_SELF']);
+
 					return true;
 				}
 				else{

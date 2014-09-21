@@ -15,7 +15,6 @@ class LoginView {
 	
 	//Visar login-formuläret om ej redan inloggad
 	public function showLoginForm(){
-			
 		$username = $this->model->getLoggedInUser();
 		//echo $username;
 		$ret = "";
@@ -47,7 +46,22 @@ class LoginView {
 				$this->rememberValue = false;
 			}
 			if ($this->model->login($_POST["username"], $_POST["password"], $this->rememberValue)){
-				
+
+				if($this->rememberValue == true){
+						$this->setCookie();
+						echo "Kaka satt";
+						echo $_COOKIE["Username"];
+						echo $_COOKIE["Password"];
+						}
+						
+				// if(isset($_COOKIE["Username"]) && (isset($_COOKIE["Password"]))){
+					// echo "Här ska det skrivas";
+					// $storage = fopen("src/storage.txt", "w");
+					// $data = $_COOKIE["Username"] . "\n". $_COOKIE["Password"];
+					// fwrite($storage, $data);
+					// fclose($storage);
+
+				//}
 				$ret = $this->showLoggedIn($_POST["username"]);
 			}
 		}
@@ -55,10 +69,35 @@ class LoginView {
 		return $ret;
 	}	
 	
+	public function setCookie(){
+		echo "setCookie lalalalala";
+		setcookie('Username', $_POST["username"], time()+60*60*24*365, "/");
+		setcookie('Password', crypt($_POST["password"]), time()+60*60*24*365, "/");
+		return;
+	}
+	
+	public function getLoggedInUser(){
+		$username = "";
+		
+		if(isset($_COOKIE["Username"])){
+			$username = $_COOKIE["Username"];
+		}
+		else{
+			$username = $this->model->getLoggedInUser();
+		}
+		
+		return $username;
+	}
+	
 	//Inloggad
 	public function showLoggedIn($username){
-		if(isset($_COOKIE["username"])){
-			$username = $_COOKIE["username"];
+		if(isset($_COOKIE["Username"])){
+			$username = $_COOKIE["Username"];
+			echo "Username: " . $username;
+		}
+		
+		if(isset($_COOKIE["Password"])){
+			echo $_COOKIE["Password"];
 		}
 		//<a href='?loggedOut'>Logga ut</a>
 		$ret = "<h1>Laborationskod as223jx</h1><h2>".$username." är inloggad</h2><br>
@@ -74,6 +113,9 @@ class LoginView {
 			//if(isset($_POST["remember"])){
 			//	echo "Håll mig inloggad";
 			//}
+
+
+			
 			return true;
 		}
 		
@@ -83,12 +125,57 @@ class LoginView {
 	}
 	
 	public function checkCookies(){
-		if(isset($_COOKIE["Username"]) && ($_COOKIE["Password"])){
-			$this->model->login($_COOKIE["Username"], $_COOKIE["Password"], true);
-			return true;
+		if(isset($_COOKIE["Username"]) && (isset($_COOKIE["Password"]))){
+			$password = "";
+			$username = "";
+			if ($_SESSION["loggedIn"] == 1){
+				echo "Store cookies";
+				$this->storeCookies();
+			}
+			echo "Sessionsvärde: " . $_SESSION["loggedIn"];
+			
+			$linesArr = array();
+			$fh = fopen("src/storage.txt", "r");
+			
+			while (!feof($fh)){
+				$line = fgets($fh);
+				$line = trim($line);
+				
+				$linesArr[] = $line;
+			}
+			fclose($fh);
+			
+			if(count($linesArr) == 2){
+			$username = $linesArr[0];
+			$password = $linesArr[1];
+			}
+			else{ echo "Finns inget stored!";
+				if(isset($_COOKIE["Password"])){
+					echo "Kaka password : " . $_COOKIE["Password"];
+				}
+			}
+			
+			if($_COOKIE["Username"] == $username && $_COOKIE["Password"] == $password){
+				echo "Inloggning lyckades via cookies";
+				return true;
+			}
+			else {
+				echo "Felaktig information i cookie";
+				return false;
+			}
 		}
+		
 		else{
 			return false;
 		}
+	}
+	
+	public function storeCookies(){
+			$storage = fopen("src/storage.txt", "w");
+			$data = $_COOKIE["Username"] . "\n". $_COOKIE["Password"];
+			fwrite($storage, $data);
+			fclose($storage);
+			echo "Kakan skriven till fil";
+			return;
 	}
 }
