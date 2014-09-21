@@ -19,6 +19,7 @@ class LoginView {
         if(isset($_POST["logOut"])){
             echo "Du har loggat ut";
         }
+		$username = "";
         if (isset($_POST["username"])){
             $username = $_POST["username"];
         }
@@ -50,8 +51,8 @@ class LoginView {
 	public function setCookie(){
 		setcookie('Username', $_POST["username"], time()+60*60*24*365, "/");
 		setcookie('Password', crypt($_POST["password"]), time()+60*60*24*365, "/");
-		chmod("/src/storage.txt", 0777);
-			$storage = fopen("/src/cookieExpire.txt", "w");
+		chmod("src/storage.txt", 0777);
+			$storage = fopen("src/cookieExpire.txt", "w");
 			$data = time()+60*60*24*365;
 			fwrite($storage, $data);
 			fclose($storage);
@@ -134,8 +135,8 @@ class LoginView {
 			$username = "";
 			
 			$linesArr = array();
-			chmod("/src/storage.txt", 0777);
-			$fh = fopen("/src/storage.txt", "r");
+			chmod("src/storage.txt", 0777);
+			$fh = fopen("src/storage.txt", "r");
 			
 			while (!feof($fh)){
 				$line = fgets($fh);
@@ -150,7 +151,7 @@ class LoginView {
     			$password = $linesArr[1];
 			}
 			
-			$expire = fopen("/src/cookieExpire.txt", "r");
+			$expire = fopen("src/cookieExpire.txt", "r");
 			while (!feof($expire)){
 				$line = fgets($expire);
 				$line = trim($line);
@@ -180,8 +181,8 @@ class LoginView {
 	
 	public function storeCookies(){
         $linesArr = array();
-		chmod("/src/storage.txt", 0777);
-		$fh = fopen("/src/storage.txt", "r");
+		chmod("src/storage.txt", 0777);
+		$fh = fopen("src/storage.txt", "r");
 		
 		while (!feof($fh)){
 			$line = fgets($fh);
@@ -192,8 +193,8 @@ class LoginView {
 		fclose($fh);
 
         if(count($linesArr) != 2){
-		    chmod("/src/storage.txt", 0777);
-			$storage = fopen("/src/storage.txt", "w");
+		    chmod("src/storage.txt", 0777);
+			$storage = fopen("src/storage.txt", "w");
 			$data = $_COOKIE["Username"] . "\n". $_COOKIE["Password"];
 			fwrite($storage, $data);
 			fclose($storage);

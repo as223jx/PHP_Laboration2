@@ -56,7 +56,7 @@ class LoginModel {
 			setcookie('Username', null, false);
             setcookie('Password', null, false);
 			
-			$storage = fopen("/src/storage.txt", "w");
+			$storage = fopen("src/storage.txt", "w");
 			fclose($storage);
 			
 			if(session_id() != '') {
@@ -69,7 +69,7 @@ class LoginModel {
 	    	setcookie('Username', null, false);
             setcookie('Password', null, false);
 	    }
-		$storage = fopen("/src/storage.txt", "w");
+		$storage = fopen("src/storage.txt", "w");
 		fclose($storage);
 			if(session_id() != '') {
                 session_destroy();
