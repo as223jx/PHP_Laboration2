@@ -10,11 +10,11 @@ class HTMLView {
 		echo "
 			<!DOCTYPE html>
 			<meta charset='UTF-8'>
-			<html>
+			<title>as223jx</title>
 			<body>
+				<h1>Laborationskod as223jx</h1>
 				$body
 			</body>
-			</html>
 		";
 	}
 }

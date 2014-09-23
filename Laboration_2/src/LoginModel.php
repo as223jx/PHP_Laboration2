@@ -8,120 +8,70 @@
 
 class LoginModel {
 	private $loggedIn = "loggedIn";
+	private $browser = "browser";
+	private $username = "";
 	
 	public function __construct(){
 		
 	}
 	
-	public function checkIfEmpty($username, $password){
-
-		if(strlen($username) == 0 or strlen($password) == 0){
-			
-			if (strlen($username) == 0){
-				echo "Användarnamn saknas";
-			}
-			else if (strlen($password) == 0){
-				echo "Lösenord saknas";
-			}
+	// Returnerar true om användaren redan är inloggad
+	public function userLoggedInStatus(){
+	    // Kollar så ingen sessionsstöld har skett
+        if(isset($_SESSION[$this->browser])){
+            if ($_SESSION[$this->browser] != $_SERVER["HTTP_USER_AGENT"]){
+                return false;
+            }
+		}
+		
+		if(isset($_SESSION[$this->loggedIn]) && $_SESSION[$this->loggedIn] == 1){
 			return true;
-		}
-		
-		return false;
-	}
-	
-	
-	//Kollar om användaren redan är inloggad eller ej
-	public function loggedInStatus(){
-			
-		if(isset($_SESSION[$this->loggedIn]) == false){
-			$_SESSION[$this->loggedIn] = 0;
-		}
-		
-		if(isset($_POST["logOut"]) and $_SESSION[$this->loggedIn] == 1){
-            $this->logOut();
-
-			//echo "Du har nu loggat ut";
-		}
-
-		if($_SESSION[$this->loggedIn] == 0){
-			return false;
 		}
 		else{
-			return true;
+			return false;
 		}
 	}
 	
-	public function logOut(){
-	    	$_SESSION[$this->loggedIn] = 0;
-			setcookie('Username', null, false);
-            setcookie('Password', null, false);
-			
-			$storage = fopen("src/storage.txt", "w");
-			fclose($storage);
-			
-			if(session_id() != '') {
-                session_destroy();
-            }
-	}
-	
-	public function resetCookies(){
-	    if(isset($_COOKIE["Username"]) && isset($_COOKIE["Password"])){
-	    	setcookie('Username', null, false);
-            setcookie('Password', null, false);
-	    }
-		$storage = fopen("src/storage.txt", "w");
-		fclose($storage);
-			if(session_id() != '') {
-                session_destroy();
-            }
+	// Förstör sessionen
+	public function destroySession(){
+            session_unset();
+            session_destroy();
 	}
 	
 	//Hämtar användarnamnet på personen inloggad i sessionen
 	public function getLoggedInUser(){
-		$username = "";
-		
 		if(isset($_SESSION["username"])){
-			$username = $_SESSION["username"];
+			return $_SESSION["username"];
 		}
-		
-		return $username;
 	}
 	
-	public function setLoggedInStatus(){
-		$_SESSION[$this->loggedIn] = 1;
-		//echo "Inloggning lyckades";
-	}
-	
-	public function login($username, $password, $value){
-		
-		if($this->checkIfEmpty($username, $password) == false){
-			$_SESSION["username"] = $username;
-			$_SESSION["password"] = $password;
-		
-			$linesArr = array();
-			$fh = fopen("src/users.txt", "r");
-			
-			while (!feof($fh)){
-				$line = fgets($fh);
-				$line = trim($line);
-				
-				$linesArr[] = $line;
-			}
-			fclose($fh);
+	// Loggar in
+	public function login($username, $password){
+		$_SESSION["username"] = $username;
+		$_SESSION["password"] = $password;
 
-			for($i = 0; $i < count($linesArr); $i++){
-				if($username === $linesArr[$i] and $password === $linesArr[$i+1]){
+		$linesArr = array();
+		$fh = fopen("src/users.txt", "r");
 
-					$_SESSION[$this->loggedIn] = 1;
-					return true;
-				}
-				else{
-					echo "Fel användarnamn eller lösenord";
-					return false;
-				}
-				$i++;
-			}
+		while (!feof($fh)){
+			$line = fgets($fh);
+			$line = trim($line);
 			
+			$linesArr[] = $line;
+		}
+		fclose($fh);
+
+		for($i = 0; $i < count($linesArr); $i++){
+			if($username === $linesArr[$i] && $password === $linesArr[$i+1] || md5($linesArr[$i+1])){
+				$_SESSION[$this->loggedIn] = 1;
+			    $_SESSION[$this->browser] = $_SERVER["HTTP_USER_AGENT"];
+				return true;
+			}
+
+			else{
+				return false;
+			}
+			$i++;
 		}
 	}
 }

@@ -5,10 +5,15 @@
 
 class LoginView {
 	private $model;
-	private $username;
+	private $username = "";
+	private $password = "";
+	private $userArr = array();
 	private $rememberValue;
-	private $saveUser;
-	
+	private $usernameCookie = "Username";
+	private $passwordCookie = "Password";
+	private $msg = "";
+	private $dateTime;
+
 	public function __construct(LoginModel $model){
 		$this->model = $model;
 
@@ -16,188 +21,196 @@ class LoginView {
 	
 	//Visar login-formuläret om ej redan inloggad
 	public function showLoginForm(){
-        if(isset($_POST["logOut"])){
-            echo "Du har loggat ut";
-        }
-		$username = "";
-        if (isset($_POST["username"])){
-            $username = $_POST["username"];
-        }
-		//echo $username;
 		$ret = "";
 		
-		setlocale(LC_TIME, "swedish");
-		$dateTime = strftime('%A') . ", den " .strftime('%d'). " " .ucfirst(strftime("%B")). " år " .strftime("%Y"). ". Klockan är [" .strftime("%H:%M:%S"). "]";
-		$dateTime = ucfirst($dateTime);
-		$date = date('l'). " den " .date('jS F') ." år ". date('Y') . ". Klockan är [". date('h:i:s A') . "].";
-
+		// Sparar användarnamnet till inputfältet om lösenordet är fel
+        if (isset($_POST["username"])){
+            $this->username = $_POST["username"];
+		}
+		
+		$this->dateTime = $this->getTime();
 		$ret = "
-		<h1>Laborationskod as223jx</h1>
 		<h2>Ej inloggad</h2>
-		<form action='' method='post'>
+		<form method='post'>
 		<fieldset>
 		<legend>Login - Skriv in användarnamn och lösenord</legend>
-		Användarnamn: <input type='text' name='username' id='username' value='$username'>
-		Lösenord: <input type='password' name='password'>
-		<input type='checkbox' name='remember' value='Remember'>Håll mig inloggad: 
+		$this->msg
+		Användarnamn: <input type='text' name='username' id='username' value='$this->username'>
+		Lösenord: <input type='password' name='password'> Håll mig inloggad:
+		<input type='checkbox' name='remember' value='Remember'><br>
 		<input type='submit' name='submit' value='Logga in'>
 		</fieldset>
 		</form>
-		<p>$dateTime</p>";
-		
+		<p>$this->dateTime</p>";
+
 		return $ret;
-	}	
+	}
 	
 	public function setCookie(){
-		setcookie('Username', $_POST["username"], time()+60*60*24*365, "/");
-		setcookie('Password', crypt($_POST["password"]), time()+60*60*24*365, "/");
-		chmod("src/storage.txt", 0777);
-			$storage = fopen("src/cookieExpire.txt", "w");
-			$data = time()+60*60*24*365;
-			fwrite($storage, $data);
-			fclose($storage);
-	    return;
+	    //time()+60*60*24*365
+		setcookie($this->usernameCookie, $_POST["username"], time()+60*60*24*365, "/");
+		setcookie($this->passwordCookie, md5($_POST["password"]), time()+60*60*24*365, "/");
+
+		$storage = fopen("src/cookieExpire.txt", "w");
+		$data = time()+60*60*24*365;
+		fwrite($storage, $data);
+		fclose($storage);
+		
+		return;
 	}
 	
-	public function getLoggedInUser(){
-		$username = "";
-		
-		if(isset($_COOKIE["Username"])){
-			$username = $_COOKIE["Username"];
-		}
-		else{
-			$username = $this->model->getLoggedInUser();
-		}
-		
-		return $username;
-	}
-	
-	//Inloggad
+	// Visas om inloggad
 	public function showLoggedIn($username){
-	    if(isset($_COOKIE["Username"])){
-			$username = $_COOKIE["Username"];
-		}
 		
-		if(isset($_COOKIE["Username"]) && isset($_COOKIE["Password"])){
-		    $this->storeCookies();
+		// Om cookie är satt så ersätter jag $username med dess värde
+	    if(isset($_COOKIE[$this->usernameCookie])){
+			$username = $_COOKIE[$this->usernameCookie];
 		}
+
+		$this->dateTime = $this->getTime();
 		
-		$ret = "<h1>Laborationskod as223jx</h1><h2>".$username." är inloggad</h2><br>
-		<form action='' method='post'>
+		$ret = "<h2>" .$username." är inloggad</h2>$this->msg
+		<form method='post'>
 		<input type='submit' value='Logga ut' name='logOut'/>
-		</form>";
+		</form>
+		<p>$this->dateTime</p>";
 		return $ret;
 	}
+	
+	// Hämtar ut dag, tid osv och returnerar som en sträng
+	public function getTime(){
+		setlocale(LC_TIME, "swedish");
+		date_default_timezone_set('Europe/Stockholm');
+		$weekDay = ucfirst(utf8_encode(strftime('%A')));
+		$date = strftime('%d');
+		$month = ucfirst(strftime("%B"));
+		$year = strftime("%Y");
+		$time = strftime("%H:%M:%S");
 
-    public function loginSuccess(){
-        if($this->checkCookies()){
-            return "";
-        }
-        return "Inloggning lyckades";
-    }
-    
-	public function userPressedLogin(){
-        if(isset($_POST["username"])){
-    		if (isset($_POST["remember"])){
-    			$this->rememberValue = true;
-    		}
-    		else{
-    			$this->rememberValue = false;
-    		}
-    		if ($this->model->login($_POST["username"], $_POST["password"], $this->rememberValue)){
-    
-    			if($this->rememberValue == true){
-    			    $_POST["username"];
-    				$this->setCookie();
-
-    				header('Location: ' . $_SERVER['PHP_SELF']);
-    			}
-    		    return true;
-    		}
-        }
-        else{
-            return false;
-        }
+		$this->dateTime = $weekDay . ", den " . $date . " " . $month . " år " . $year . ". Klockan är [" . $time . "]";
+		
+		return $this->dateTime;	
 	}
 	
-	public function rememberMe(){
-	    if (isset($_POST["remember"])){
-	        return true;
-	    }
-	    else{
-	        return false;
-	    }
+	// Tar bort kakor och rensar filen som sparat förfallotiden
+	public function logOut(){
+		setcookie($this->usernameCookie, "", time() -3600);
+        setcookie($this->passwordCookie, "", time() -3600);
+        
+		$storage = fopen("src/cookieExpire.txt", "w");
+        fclose($storage);
 	}
 	
-	public function checkCookies(){
-		if(isset($_COOKIE["Username"]) && (isset($_COOKIE["Password"]))){
-			$password = "";
-			$username = "";
+	// Kollar så användaren matat in något i båda fälten
+	public function checkIfNotEmpty($username, $password){
+		if(strlen($username) == 0 or strlen($password) == 0){
 			
-			$linesArr = array();
-			chmod("src/storage.txt", 0777);
-			$fh = fopen("src/storage.txt", "r");
-			
-			while (!feof($fh)){
-				$line = fgets($fh);
-				$line = trim($line);
-				
-				$linesArr[] = $line;
+			if (strlen($username) == 0){
+				$this->msg = "<p>Användarnamn saknas</p>";
+				return false;
 			}
-			fclose($fh);
-			
-			if(count($linesArr) == 2){
-    			$username = $linesArr[0];
-    			$password = $linesArr[1];
-			}
-			
-			$expire = fopen("src/cookieExpire.txt", "r");
-			while (!feof($expire)){
-				$line = fgets($expire);
-				$line = trim($line);
-				
-				$expireArr[] = $line;
-			}
-			fclose($expire);
-			
-			if($_COOKIE["Username"] == $username && $_COOKIE["Password"] == $password && $this->model->loggedInStatus() == false && $expire > time()){
-				echo "Inloggning lyckades via cookies";
-				return true;
-			}
-			else if($_COOKIE["Username"] == $username && $_COOKIE["Password"] == $password && $this->model->loggedInStatus() == true && $expire > time()){
-			    return true;
-			}
-			else{
-				$this->model->resetCookies();
-				echo "Felaktig information i cookie";
+			else if (strlen($password) == 0){
+				$this->msg = "<p>Lösenord saknas</p>";
 				return false;
 			}
 		}
+		return true;
+	}
+	
+	// Kollar om kakorna har förfallit
+	public function checkIfCookieExpired(){
+        $expire = fopen("src/cookieExpire.txt", "r");
+		while (!feof($expire)){
+			$line = fgets($expire);
+			$line = trim($line);
+			$expireArr[] = $line;
+		}
+		fclose($expire);
 		
-		else{
-			return false;
+		if ($expireArr[0] < time()){
+            return true;
+		}
+		return false;
+	}
+	
+	// Kollar om kakor finns
+    public function checkIfCookiesExist(){
+        if(isset($_COOKIE[$this->usernameCookie]) && isset($_COOKIE[$this->passwordCookie])){
+            return true;
+        }
+        else return false;
+	}
+    
+    // Hämtar cookien för användarnamnet
+	public function getUsernameCookie(){
+        if(isset($_COOKIE[$this->usernameCookie])){
+            return $_COOKIE[$this->usernameCookie];
+        }
+        else return "";
+    }
+	
+	// Hämtar cookien för lösenordet
+	public function getPasswordCookie(){
+        if(isset($_COOKIE[$this->passwordCookie])){
+            return $_COOKIE[$this->passwordCookie];
+        }
+        else return "";
+	}
+	
+	// Returnerar true om användaren klickar på 'Logga in'.
+	public function userPressedLogin(){
+        if(isset($_POST["submit"])){
+            return true;
+        }
+        return false;
+    }
+
+    // Returnerar true om användaren vill bli ihågkommen
+	public function rememberMe(){
+        if (isset($_POST["remember"])){
+            $this->msg = "<p>Inloggning lyckades och vi kommer ihåg dig nästa gång</p>";
+            return true;
+        }
+        return false;
+    }
+	
+	// Returnerar true om användaren klickar på 'Logga ut'
+	public function userPressedLogOut(){
+		if(isset($_POST["logOut"])){
+		    $this->msg = "<p>Du har loggat ut</p>";
+			return true;
+		}
+		return false;
+	}
+	
+	// Returnerar användarnamnet som matats in
+	public function getUsername(){
+		if(isset($_POST["username"])){
+			return $_POST["username"];
 		}
 	}
 	
-	public function storeCookies(){
-        $linesArr = array();
-		chmod("src/storage.txt", 0777);
-		$fh = fopen("src/storage.txt", "r");
-		
-		while (!feof($fh)){
-			$line = fgets($fh);
-			$line = trim($line);
-			
-			$linesArr[] = $line;
+	// Returnerar lösenordet som matats in
+	public function getPassword(){
+		if(isset($_POST["password"])){
+			return $_POST["password"];
 		}
-		fclose($fh);
-
-        if(count($linesArr) != 2){
-		    chmod("src/storage.txt", 0777);
-			$storage = fopen("src/storage.txt", "w");
-			$data = $_COOKIE["Username"] . "\n". $_COOKIE["Password"];
-			fwrite($storage, $data);
-			fclose($storage);
-        }
+	}
+	
+	// Olika statusmeddelanden
+	public function errorMsg(){
+		$this->msg = "<p>Felaktigt användarnamn och/eller lösenord</p>";
+	}
+	
+	public function cookieLoginMsg(){
+		$this->msg = "<p>Inloggning lyckades via cookies</p>";
+	}
+	
+	public function failedCookieLoginMsg(){
+	    $this->msg = "<p>Felaktig information i cookies</p>";
+	}
+	
+	public function loginSuccess(){
+        $this->msg = "<p>Inloggning lyckades</p>";
 	}
 }
